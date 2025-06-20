@@ -2,9 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4, validate as uuidValidate } from 'uuid';
 
-// UUID v4 validation regex
-const UUID_V4_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
 const HomePage = () => {
   const [noteId, setNoteId] = useState('');
   const [error, setError] = useState<string | null>(null);
