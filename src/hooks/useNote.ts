@@ -20,51 +20,60 @@ export function useNote(noteId: string | undefined) {
     isSaving: false
   });
 
-  // Load or initialize note
+  // Initialize new note
   useEffect(() => {
     if (!noteId) return;
 
-    console.log('Attempting to load or initialize note:', noteId);
+    const initializeNote = async () => {
+      try {
+        console.log('Initializing new note:', noteId);
+        const noteRef = ref(database, `notes/${noteId}`);
+        await set(noteRef, '');
+        console.log('Note initialized successfully:', noteId);
+      } catch (error) {
+        console.error('Error initializing note:', error);
+        setState(prev => ({
+          ...prev,
+          error: `Error al crear la nota: ${error instanceof Error ? error.message : 'Error desconocido'}`,
+          isLoading: false
+        }));
+      }
+    };
+
+    initializeNote();
+  }, [noteId]);
+
+  // Subscribe to note changes
+  useEffect(() => {
+    if (!noteId) return;
+
+    console.log('Setting up note subscription:', noteId);
     const noteRef = ref(database, `notes/${noteId}`);
     
-    // Subscribe to real-time updates
-    const unsubscribe = onValue(noteRef, async (snapshot) => {
+    const unsubscribe = onValue(noteRef, (snapshot) => {
       try {
         console.log('Received database update for note:', noteId);
         const data = snapshot.val();
         
-        if (!snapshot.exists()) {
-          console.log('Note does not exist, initializing:', noteId);
-          // Initialize new note with empty content
-          await set(noteRef, '');
-          setState(prev => ({
-            ...prev,
-            content: '',
-            isLoading: false,
-            error: null
-          }));
-        } else {
-          console.log('Note loaded successfully:', noteId);
-          setState(prev => ({
-            ...prev,
-            content: data || '',
-            isLoading: false,
-            error: null
-          }));
-        }
-      } catch (error) {
-        console.error('Firebase operation error:', error);
         setState(prev => ({
           ...prev,
-          error: `Error al acceder a la nota: ${error instanceof Error ? error.message : 'Error desconocido'}`,
+          content: data ?? '', // Use nullish coalescing to handle null/undefined
+          isLoading: false,
+          error: null
+        }));
+      } catch (error) {
+        console.error('Firebase read error:', error);
+        setState(prev => ({
+          ...prev,
+          error: `Error al cargar la nota: ${error instanceof Error ? error.message : 'Error desconocido'}`,
           isLoading: false
         }));
       }
     }, (error) => {
-      console.error('Firebase read error:', error);
+      console.error('Firebase subscription error:', error);
       setState(prev => ({
         ...prev,
-        error: `Error al cargar la nota: ${error.message}`,
+        error: `Error al conectar con la nota: ${error.message}`,
         isLoading: false
       }));
     });
@@ -78,12 +87,11 @@ export function useNote(noteId: string | undefined) {
   // Save note with debounce
   useEffect(() => {
     if (!noteId || state.isLoading || state.error) return;
+    if (state.content === undefined) return;
 
     const timeoutId = setTimeout(async () => {
-      if (state.content === undefined) return; // Don't save if content is undefined
-
       try {
-        console.log('Attempting to save note:', noteId);
+        console.log('Saving note:', noteId);
         setState(prev => ({ ...prev, isSaving: true }));
         
         const noteRef = ref(database, `notes/${noteId}`);
@@ -99,18 +107,18 @@ export function useNote(noteId: string | undefined) {
           isSaving: false
         }));
       }
-    }, 750); // 750ms debounce
+    }, 750);
 
     return () => clearTimeout(timeoutId);
   }, [noteId, state.content]);
 
   const updateContent = (newContent: string) => {
-    if (state.isLoading) return; // Don't update while loading
+    if (state.isLoading) return;
     console.log('Updating note content, length:', newContent.length);
     setState(prev => ({ 
       ...prev, 
       content: newContent,
-      error: null // Clear any previous errors
+      error: null
     }));
   };
 
