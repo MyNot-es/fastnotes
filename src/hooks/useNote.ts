@@ -86,35 +86,67 @@ export function useNote(noteId: string | undefined) {
 
   // Save note with debounce
   useEffect(() => {
-    if (!noteId || state.isLoading || state.error) return;
-    if (state.content === undefined) return;
+    if (!noteId || state.isLoading) return;
+    
+    // Log the current state for debugging
+    console.log('Save effect triggered:', {
+      noteId,
+      contentLength: state.content?.length ?? 0,
+      isLoading: state.isLoading,
+      isSaving: state.isSaving
+    });
 
     const timeoutId = setTimeout(async () => {
+      // Skip save if content is undefined
+      if (state.content === undefined) {
+        console.log('Skipping save - content is undefined');
+        return;
+      }
+
+      // Set saving state
+      setState(prev => ({ ...prev, isSaving: true }));
+      
       try {
-        console.log('Saving note:', noteId);
-        setState(prev => ({ ...prev, isSaving: true }));
-        
+        console.log('Attempting to save note:', {
+          noteId,
+          contentLength: state.content.length,
+          content: state.content.substring(0, 100) + '...' // Log first 100 chars for debugging
+        });
+
         const noteRef = ref(database, `notes/${noteId}`);
         await set(noteRef, state.content);
         
         console.log('Note saved successfully:', noteId);
         setState(prev => ({ ...prev, isSaving: false, error: null }));
       } catch (error) {
-        console.error('Firebase write error:', error);
+        console.error('Firebase write error:', {
+          error,
+          noteId,
+          contentLength: state.content.length
+        });
+        
         setState(prev => ({
           ...prev,
           error: `Error al guardar la nota: ${error instanceof Error ? error.message : 'Error desconocido'}`,
           isSaving: false
         }));
       }
-    }, 750);
+    }, 750); // 750ms debounce
 
-    return () => clearTimeout(timeoutId);
+    return () => {
+      clearTimeout(timeoutId);
+    };
   }, [noteId, state.content]);
 
   const updateContent = (newContent: string) => {
     if (state.isLoading) return;
-    console.log('Updating note content, length:', newContent.length);
+    
+    console.log('Updating note content:', {
+      noteId,
+      oldLength: state.content?.length ?? 0,
+      newLength: newContent.length
+    });
+    
     setState(prev => ({ 
       ...prev, 
       content: newContent,
