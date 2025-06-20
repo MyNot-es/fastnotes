@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getDatabase, connectDatabaseEmulator } from 'firebase/database';
+import { getDatabase, Database } from 'firebase/database';
 
 // Firebase configuration object
 const firebaseConfig = {
@@ -22,7 +22,7 @@ if (missingVars.length > 0) {
   throw new Error(`Missing Firebase configuration: ${missingVars.join(', ')}`);
 }
 
-let db;
+let db: Database;
 
 // Initialize Firebase
 try {

@@ -1,8 +1,8 @@
 import { Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { ThemeToggle } from './components/ThemeToggle';
-import HomePage from './pages/HomePage';
-import NoteEditorPage from './pages/NoteEditorPage';
+import { HomePage } from './pages/HomePage';
+import { NoteEditorPage } from './pages/NoteEditorPage';
 import './App.css'
 
 function App() {
@@ -12,7 +12,7 @@ function App() {
         <ThemeToggle />
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/note/:id?" element={<NoteEditorPage />} />
+          <Route path="/nota/:noteId" element={<NoteEditorPage />} />
         </Routes>
       </div>
     </ThemeProvider>
