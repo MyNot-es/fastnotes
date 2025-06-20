@@ -52,6 +52,7 @@ export function NoteEditorPage() {
                 {isSaving ? 'Guardando...' : 'Guardado'}
               </span>
               <button
+                type="button"
                 onClick={handleCopyUrl}
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800"
               >
@@ -70,6 +71,7 @@ export function NoteEditorPage() {
             placeholder="Escribe tu nota aquí..."
             className="w-full h-full min-h-[calc(100vh-8rem)] p-4 border-0 focus:ring-0 text-gray-900 dark:text-white bg-transparent resize-none"
             autoFocus
+            spellCheck="false"
           />
         </div>
       </div>

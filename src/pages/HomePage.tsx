@@ -19,26 +19,27 @@ const HomePage = () => {
   };
 
   const handleNoteIdChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value.trim();
+    const value = event.target.value;
     setNoteId(value);
-    setError(null);
+    if (error) setError(null); // Clear error when user types
   };
 
   const handleNoteIdSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     
-    if (!noteId) {
+    const trimmedId = noteId.trim();
+    if (!trimmedId) {
       setError('Por favor, ingresa un código de nota.');
       return;
     }
 
-    if (!uuidValidate(noteId)) {
+    if (!uuidValidate(trimmedId)) {
       setError('El código ingresado no es válido.');
       return;
     }
 
-    console.log('Navigating to existing note:', noteId);
-    navigate(`/nota/${noteId}`);
+    console.log('Navigating to existing note:', trimmedId);
+    navigate(`/nota/${trimmedId}`);
   };
 
   return (
@@ -55,6 +56,7 @@ const HomePage = () => {
 
         <div className="space-y-6">
           <button
+            type="button"
             onClick={handleCreateNote}
             className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800"
           >
@@ -84,6 +86,7 @@ const HomePage = () => {
                 onChange={handleNoteIdChange}
                 placeholder="Ingresa el código de la nota"
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm dark:bg-gray-700"
+                autoComplete="off"
               />
             </div>
 

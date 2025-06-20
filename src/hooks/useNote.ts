@@ -20,23 +20,46 @@ export function useNote(noteId: string | undefined) {
     isSaving: false
   });
 
-  // Load note
+  // Load or initialize note
   useEffect(() => {
     if (!noteId) return;
 
-    console.log('Attempting to load note:', noteId);
+    console.log('Attempting to load or initialize note:', noteId);
     const noteRef = ref(database, `notes/${noteId}`);
     
     // Subscribe to real-time updates
-    const unsubscribe = onValue(noteRef, (snapshot) => {
-      console.log('Received database update for note:', noteId);
-      const data = snapshot.val();
-      setState(prev => ({
-        ...prev,
-        content: data || '',
-        isLoading: false,
-        error: !data && prev.content === '' ? 'Nota no encontrada' : null
-      }));
+    const unsubscribe = onValue(noteRef, async (snapshot) => {
+      try {
+        console.log('Received database update for note:', noteId);
+        const data = snapshot.val();
+        
+        if (!snapshot.exists()) {
+          console.log('Note does not exist, initializing:', noteId);
+          // Initialize new note with empty content
+          await set(noteRef, '');
+          setState(prev => ({
+            ...prev,
+            content: '',
+            isLoading: false,
+            error: null
+          }));
+        } else {
+          console.log('Note loaded successfully:', noteId);
+          setState(prev => ({
+            ...prev,
+            content: data || '',
+            isLoading: false,
+            error: null
+          }));
+        }
+      } catch (error) {
+        console.error('Firebase operation error:', error);
+        setState(prev => ({
+          ...prev,
+          error: `Error al acceder a la nota: ${error instanceof Error ? error.message : 'Error desconocido'}`,
+          isLoading: false
+        }));
+      }
     }, (error) => {
       console.error('Firebase read error:', error);
       setState(prev => ({
@@ -57,6 +80,8 @@ export function useNote(noteId: string | undefined) {
     if (!noteId || state.isLoading || state.error) return;
 
     const timeoutId = setTimeout(async () => {
+      if (state.content === undefined) return; // Don't save if content is undefined
+
       try {
         console.log('Attempting to save note:', noteId);
         setState(prev => ({ ...prev, isSaving: true }));
@@ -65,24 +90,28 @@ export function useNote(noteId: string | undefined) {
         await set(noteRef, state.content);
         
         console.log('Note saved successfully:', noteId);
-        setState(prev => ({ ...prev, isSaving: false }));
+        setState(prev => ({ ...prev, isSaving: false, error: null }));
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         console.error('Firebase write error:', error);
         setState(prev => ({
           ...prev,
-          error: `Error al guardar la nota: ${errorMessage}`,
+          error: `Error al guardar la nota: ${error instanceof Error ? error.message : 'Error desconocido'}`,
           isSaving: false
         }));
       }
     }, 750); // 750ms debounce
 
     return () => clearTimeout(timeoutId);
-  }, [noteId, state.content, state.isLoading]);
+  }, [noteId, state.content]);
 
   const updateContent = (newContent: string) => {
+    if (state.isLoading) return; // Don't update while loading
     console.log('Updating note content, length:', newContent.length);
-    setState(prev => ({ ...prev, content: newContent }));
+    setState(prev => ({ 
+      ...prev, 
+      content: newContent,
+      error: null // Clear any previous errors
+    }));
   };
 
   return {
