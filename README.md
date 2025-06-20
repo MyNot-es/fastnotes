@@ -65,15 +65,31 @@ VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
 VITE_FIREBASE_APP_ID=1:123456789:web:abcdef
 ```
 
+⚠️ **IMPORTANTE: Configuración de la URL de Firebase Database**
+
+Para que la aplicación funcione correctamente, es CRÍTICO que `VITE_FIREBASE_DB_URL` esté configurada con la URL exacta de tu base de datos en Firebase. Para encontrar la URL correcta:
+
+1. Ve a la [Consola de Firebase](https://console.firebase.google.com)
+2. Selecciona tu proyecto
+3. En el menú lateral, haz clic en "Realtime Database"
+4. En la parte superior verás la URL de tu base de datos (ejemplo: `https://tu-proyecto.firebaseio.com`)
+5. Copia esta URL **exactamente como aparece** y úsala como valor para `VITE_FIREBASE_DB_URL`
+
+Si la URL no coincide exactamente, la aplicación no podrá conectarse a la base de datos y las notas no se guardarán.
+
 ### Despliegue en Vercel
 
 1. Conecta tu repositorio a Vercel
 2. En la configuración del proyecto en Vercel:
    - Ve a "Settings" > "Environment Variables"
    - Añade las mismas variables de entorno listadas arriba
-   - Asegúrate de que los nombres coincidan exactamente (incluyendo el prefijo `VITE_`)
+   - **CRÍTICO**: Asegúrate de que `VITE_FIREBASE_DB_URL` coincida EXACTAMENTE con la URL de tu base de datos en Firebase
+   - Verifica dos veces la URL antes de guardar los cambios
+   - Si necesitas actualizar la URL, después del cambio deberás redesplegar la aplicación
 
-> ⚠️ **Importante**: Nunca comitees el archivo `.env.local` al repositorio. Ya está incluido en `.gitignore` por seguridad.
+> ⚠️ **Importante**: 
+> - Nunca comitees el archivo `.env.local` al repositorio. Ya está incluido en `.gitignore` por seguridad.
+> - Si la aplicación no guarda las notas en producción, lo primero que debes verificar es que `VITE_FIREBASE_DB_URL` en Vercel coincida con la URL de tu base de datos en Firebase.
 
 ## 🔥 Configuración de Firebase
 

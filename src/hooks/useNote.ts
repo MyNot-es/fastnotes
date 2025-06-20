@@ -26,22 +26,11 @@ export function useNote(noteId: string | undefined) {
 
     const initializeNote = async () => {
       try {
-        console.log('Initializing new note:', {
-          id: noteId,
-          database: database.type,
-          app: database.app.name
-        });
-
         const noteRef = ref(database, `notes/${noteId}`);
         await set(noteRef, '');
-        console.log('Note initialized successfully:', noteId);
       } catch (error) {
         const errorMsg = `Error al crear la nota: ${error instanceof Error ? error.message : 'Error desconocido'}`;
-        console.error('Error initializing note:', {
-          error,
-          noteId,
-          database: database.type
-        });
+        console.error('Error initializing note:', error);
         setState(prev => ({
           ...prev,
           error: errorMsg,
@@ -56,24 +45,12 @@ export function useNote(noteId: string | undefined) {
   // Subscribe to note changes
   useEffect(() => {
     if (!noteId) return;
-
-    console.log('Setting up note subscription:', {
-      id: noteId,
-      database: database.type
-    });
     
     const noteRef = ref(database, `notes/${noteId}`);
     
     const unsubscribe = onValue(noteRef, (snapshot) => {
       try {
-        console.log('Received database update:', {
-          id: noteId,
-          exists: snapshot.exists(),
-          value: snapshot.val()
-        });
-        
         const data = snapshot.val();
-        
         setState(prev => ({
           ...prev,
           content: data ?? '', // Use nullish coalescing to handle null/undefined
@@ -82,11 +59,7 @@ export function useNote(noteId: string | undefined) {
         }));
       } catch (error) {
         const errorMsg = `Error al cargar la nota: ${error instanceof Error ? error.message : 'Error desconocido'}`;
-        console.error('Firebase read error:', {
-          error,
-          noteId,
-          snapshot: snapshot.exists()
-        });
+        console.error('Error loading note:', error);
         setState(prev => ({
           ...prev,
           error: errorMsg,
@@ -94,11 +67,7 @@ export function useNote(noteId: string | undefined) {
         }));
       }
     }, (error) => {
-      console.error('Firebase subscription error:', {
-        error,
-        noteId,
-        database: database.type
-      });
+      console.error('Error subscribing to note:', error);
       setState(prev => ({
         ...prev,
         error: `Error al conectar con la nota: ${error.message}`,
@@ -107,7 +76,6 @@ export function useNote(noteId: string | undefined) {
     });
 
     return () => {
-      console.log('Cleaning up note subscription:', noteId);
       unsubscribe();
     };
   }, [noteId]);
@@ -116,49 +84,17 @@ export function useNote(noteId: string | undefined) {
   useEffect(() => {
     if (!noteId || state.isLoading) return;
     
-    console.log('Save effect triggered:', {
-      id: noteId,
-      contentLength: state.content?.length ?? 0,
-      isLoading: state.isLoading,
-      isSaving: state.isSaving,
-      database: database.type
-    });
-
     const timeoutId = setTimeout(async () => {
-      // Skip save if content is undefined
-      if (state.content === undefined) {
-        console.log('Skipping save - content is undefined');
-        return;
-      }
+      if (state.content === undefined) return;
 
       setState(prev => ({ ...prev, isSaving: true, error: null }));
       
       try {
         const noteRef = ref(database, `notes/${noteId}`);
-        
-        console.log('Attempting to save note:', {
-          id: noteId,
-          ref: noteRef.toString(),
-          contentLength: state.content.length,
-          contentPreview: state.content.substring(0, 100) + '...',
-          database: database.type
-        });
-
         await set(noteRef, state.content);
-        
-        console.log('Note saved successfully:', {
-          id: noteId,
-          contentLength: state.content.length
-        });
       } catch (error) {
         const errorMsg = `Error al guardar la nota: ${error instanceof Error ? error.message : 'Error desconocido'}`;
-        console.error('Firebase write error:', {
-          error,
-          noteId,
-          contentLength: state.content.length,
-          database: database.type
-        });
-        
+        console.error('Error saving note:', error);
         setState(prev => ({
           ...prev,
           error: errorMsg
@@ -175,14 +111,6 @@ export function useNote(noteId: string | undefined) {
 
   const updateContent = (newContent: string) => {
     if (state.isLoading) return;
-    
-    console.log('Updating note content:', {
-      id: noteId,
-      oldLength: state.content?.length ?? 0,
-      newLength: newContent.length,
-      database: database.type
-    });
-    
     setState(prev => ({ 
       ...prev, 
       content: newContent,

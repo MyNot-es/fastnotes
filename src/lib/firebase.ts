@@ -28,36 +28,21 @@ let db: Database;
 
 // Initialize Firebase
 try {
-  console.log('Initializing Firebase with config:', {
-    projectId: firebaseConfig.projectId,
-    databaseURL: firebaseConfig.databaseURL,
-    authDomain: firebaseConfig.authDomain
-  });
-
   app = initializeApp(firebaseConfig);
-  console.log('Firebase App initialized successfully:', {
-    name: app.name,
-    options: app.options
-  });
-
   db = getDatabase(app);
-  console.log('Firebase Realtime Database initialized:', {
-    type: db.type,
-    app: db.app.name
-  });
 
-  // Test database connection
-  const dbRef = ref(db, '.info/connected');
-  onValue(dbRef, (snapshot) => {
+  // Monitor database connection status
+  const connectedRef = ref(db, '.info/connected');
+  onValue(connectedRef, (snapshot) => {
     const connected = snapshot.val();
-    console.log('Firebase Database connection state:', connected ? 'CONNECTED' : 'DISCONNECTED');
-  }, (error) => {
-    console.error('Firebase Database connection error:', error);
+    if (!connected) {
+      console.warn('Firebase Database disconnected. Please check your database URL configuration.');
+    }
   });
 
 } catch (error) {
-  console.error('Critical error initializing Firebase:', error);
-  throw new Error(`Failed to initialize Firebase: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  console.error('Failed to initialize Firebase:', error instanceof Error ? error.message : 'Unknown error');
+  throw error;
 }
 
 export { db }; 
