@@ -1,75 +1,102 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4, validate as uuidValidate } from 'uuid';
 
 // UUID v4 validation regex
 const UUID_V4_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export default function HomePage() {
-  const navigate = useNavigate();
   const [noteId, setNoteId] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const handleCreateNote = () => {
-    const newNoteId = uuidv4();
-    navigate(`/note/${newNoteId}`);
+    try {
+      const newNoteId = uuidv4();
+      console.log('Creating new note with ID:', newNoteId);
+      navigate(`/nota/${newNoteId}`);
+    } catch (error) {
+      console.error('Error creating note:', error);
+      setError('Error al crear la nota. Por favor, intenta de nuevo.');
+    }
   };
 
-  const handleRecoverNote = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
+  const handleNoteIdChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value.trim();
+    setNoteId(value);
+    setError(null);
+  };
 
-    const trimmedId = noteId.trim();
-    if (!trimmedId) {
-      setError('Por favor, ingresa un código de nota');
+  const handleNoteIdSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    
+    if (!noteId) {
+      setError('Por favor, ingresa un código de nota.');
       return;
     }
 
-    if (!UUID_V4_REGEX.test(trimmedId)) {
-      setError('El código ingresado no es válido. Debe ser un UUID v4');
+    if (!uuidValidate(noteId)) {
+      setError('El código ingresado no es válido.');
       return;
     }
 
-    navigate(`/note/${trimmedId}`);
+    console.log('Navigating to existing note:', noteId);
+    navigate(`/nota/${noteId}`);
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8">
-      <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-8 sm:mb-12 text-gray-900 dark:text-gray-100 text-center">
-        FastNotes
-      </h1>
-      
-      <div className="flex flex-col gap-6 w-full max-w-sm sm:max-w-md">
-        <button
-          onClick={handleCreateNote}
-          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg transition-colors shadow-lg hover:shadow-xl"
-        >
-          Crear nota
-        </button>
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 dark:bg-gray-900">
+      <div className="max-w-md w-full space-y-8 bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            FastNotes
+          </h1>
+          <p className="text-gray-600 dark:text-gray-300">
+            Crea o recupera una nota al instante
+          </p>
+        </div>
 
-        <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-gray-200 dark:from-gray-700 to-transparent opacity-10 rounded-lg"></div>
-          <form onSubmit={handleRecoverNote} className="flex flex-col gap-3">
-            <div className="space-y-2">
+        <div className="space-y-6">
+          <button
+            onClick={handleCreateNote}
+            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800"
+          >
+            Crear nueva nota
+          </button>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300 dark:border-gray-600" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                O
+              </span>
+            </div>
+          </div>
+
+          <form onSubmit={handleNoteIdSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="noteId" className="sr-only">
+                Código de la nota
+              </label>
               <input
+                id="noteId"
                 type="text"
                 value={noteId}
-                onChange={(e) => {
-                  setNoteId(e.target.value);
-                  setError('');
-                }}
+                onChange={handleNoteIdChange}
                 placeholder="Ingresa el código de la nota"
-                className="w-full px-4 py-3 rounded-lg bg-white/5 dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 focus:border-blue-500 focus:outline-none text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 shadow-sm"
+                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm dark:bg-gray-700"
               />
-              {error && (
-                <p className="text-red-600 dark:text-red-400 text-sm px-1">
-                  {error}
-                </p>
-              )}
             </div>
+
+            {error && (
+              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+            )}
+
             <button
               type="submit"
-              className="bg-gray-800 dark:bg-gray-700 hover:bg-gray-700 dark:hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg transition-colors shadow-lg hover:shadow-xl"
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-gray-800"
             >
               Recuperar nota
             </button>
