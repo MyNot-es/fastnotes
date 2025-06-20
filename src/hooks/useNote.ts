@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ref, onValue, set } from 'firebase/database';
+import { ref, onValue, set, Database } from 'firebase/database';
 import { db } from '../lib/firebase';
 
 interface NoteState {
@@ -8,6 +8,9 @@ interface NoteState {
   error: string | null;
   isSaving: boolean;
 }
+
+// Ensure db is properly typed
+const database: Database = db;
 
 export function useNote(noteId: string | undefined) {
   const [state, setState] = useState<NoteState>({
@@ -21,10 +24,12 @@ export function useNote(noteId: string | undefined) {
   useEffect(() => {
     if (!noteId) return;
 
-    const noteRef = ref(db, `notes/${noteId}`);
+    console.log('Attempting to load note:', noteId);
+    const noteRef = ref(database, `notes/${noteId}`);
     
     // Subscribe to real-time updates
     const unsubscribe = onValue(noteRef, (snapshot) => {
+      console.log('Received database update for note:', noteId);
       const data = snapshot.val();
       setState(prev => ({
         ...prev,
@@ -33,15 +38,18 @@ export function useNote(noteId: string | undefined) {
         error: !data && prev.content === '' ? 'Nota no encontrada' : null
       }));
     }, (error) => {
+      console.error('Firebase read error:', error);
       setState(prev => ({
         ...prev,
-        error: 'Error al cargar la nota',
+        error: `Error al cargar la nota: ${error.message}`,
         isLoading: false
       }));
-      console.error('Error loading note:', error);
     });
 
-    return () => unsubscribe();
+    return () => {
+      console.log('Cleaning up note subscription:', noteId);
+      unsubscribe();
+    };
   }, [noteId]);
 
   // Save note with debounce
@@ -50,14 +58,20 @@ export function useNote(noteId: string | undefined) {
 
     const timeoutId = setTimeout(async () => {
       try {
+        console.log('Attempting to save note:', noteId);
         setState(prev => ({ ...prev, isSaving: true }));
-        await set(ref(db, `notes/${noteId}`), state.content);
+        
+        const noteRef = ref(database, `notes/${noteId}`);
+        await set(noteRef, state.content);
+        
+        console.log('Note saved successfully:', noteId);
         setState(prev => ({ ...prev, isSaving: false }));
       } catch (error) {
-        console.error('Error saving note:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        console.error('Firebase write error:', error);
         setState(prev => ({
           ...prev,
-          error: 'Error al guardar la nota',
+          error: `Error al guardar la nota: ${errorMessage}`,
           isSaving: false
         }));
       }
@@ -67,6 +81,7 @@ export function useNote(noteId: string | undefined) {
   }, [noteId, state.content, state.isLoading]);
 
   const updateContent = (newContent: string) => {
+    console.log('Updating note content, length:', newContent.length);
     setState(prev => ({ ...prev, content: newContent }));
   };
 

@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getDatabase } from 'firebase/database';
+import { getDatabase, connectDatabaseEmulator } from 'firebase/database';
 
 // Firebase configuration object
 const firebaseConfig = {
@@ -12,10 +12,31 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// Validate Firebase configuration
+const missingVars = Object.entries(firebaseConfig)
+  .filter(([_, value]) => !value)
+  .map(([key]) => key);
 
-// Get database instance
-const db = getDatabase(app);
+if (missingVars.length > 0) {
+  console.error('Missing Firebase configuration variables:', missingVars);
+  throw new Error(`Missing Firebase configuration: ${missingVars.join(', ')}`);
+}
+
+let db;
+
+// Initialize Firebase
+try {
+  const app = initializeApp(firebaseConfig);
+  db = getDatabase(app);
+
+  // Log successful initialization
+  console.log('Firebase initialized successfully with config:', {
+    projectId: firebaseConfig.projectId,
+    databaseURL: firebaseConfig.databaseURL
+  });
+} catch (error) {
+  console.error('Error initializing Firebase:', error);
+  throw error;
+}
 
 export { db }; 
