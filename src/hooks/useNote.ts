@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ref, onValue, set, Database } from 'firebase/database';
+import { validate as uuidValidate } from 'uuid';
 import { db } from '../lib/firebase';
 
 interface NoteState {
@@ -20,9 +21,19 @@ export function useNote(noteId: string | undefined) {
     isSaving: false
   });
 
+  // Validate noteId before using it
+  const isValidNoteId = noteId && uuidValidate(noteId);
+
   // Initialize new note
   useEffect(() => {
-    if (!noteId) return;
+    if (!isValidNoteId) {
+      setState(prev => ({
+        ...prev,
+        error: 'ID de nota inválido',
+        isLoading: false
+      }));
+      return;
+    }
 
     const initializeNote = async () => {
       try {
@@ -40,13 +51,14 @@ export function useNote(noteId: string | undefined) {
     };
 
     initializeNote();
-  }, [noteId]);
+  }, [noteId, isValidNoteId]);
 
   // Subscribe to note changes
   useEffect(() => {
-    if (!noteId) return;
+    if (!isValidNoteId) return;
     
     const noteRef = ref(database, `notes/${noteId}`);
+    console.log('Creating database reference for path:', `notes/${noteId}`);
     
     const unsubscribe = onValue(noteRef, (snapshot) => {
       try {
@@ -78,11 +90,11 @@ export function useNote(noteId: string | undefined) {
     return () => {
       unsubscribe();
     };
-  }, [noteId]);
+  }, [noteId, isValidNoteId]);
 
   // Save note with debounce
   useEffect(() => {
-    if (!noteId || state.isLoading) return;
+    if (!isValidNoteId || state.isLoading) return;
     
     const timeoutId = setTimeout(async () => {
       if (state.content === undefined) return;
@@ -107,7 +119,7 @@ export function useNote(noteId: string | undefined) {
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [noteId, state.content]);
+  }, [noteId, state.content, isValidNoteId]);
 
   const updateContent = (newContent: string) => {
     if (state.isLoading) return;
