@@ -20,6 +20,13 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
+// Add strict assertion for databaseURL
+console.assert(
+  firebaseConfig.databaseURL && firebaseConfig.databaseURL.includes('europe-west1'),
+  'ERROR CRÍTICO: databaseURL no es la correcta o no está definida!',
+  firebaseConfig.databaseURL
+);
+
 // Log the actual configuration being used (without sensitive values)
 console.log('Firebase configuration:', {
   authDomain: firebaseConfig.authDomain,
@@ -33,9 +40,11 @@ let db: Database;
 
 // Initialize Firebase
 try {
-  // Validate database URL format
-  if (!firebaseConfig.databaseURL.startsWith('https://') || !firebaseConfig.databaseURL.includes('firebaseio.com')) {
-    throw new Error(`Invalid Firebase Database URL format: ${firebaseConfig.databaseURL}`);
+  // Validate database URL format and region
+  if (!firebaseConfig.databaseURL || 
+      !firebaseConfig.databaseURL.startsWith('https://') || 
+      !firebaseConfig.databaseURL.includes('europe-west1')) {
+    throw new Error(`Invalid Firebase Database URL format or region: ${firebaseConfig.databaseURL}`);
   }
 
   app = initializeApp(firebaseConfig);
