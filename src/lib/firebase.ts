@@ -41,19 +41,16 @@ console.log('Environment status:', {
   }), {})
 });
 
-// Get Firebase configuration from Vite's define
-declare const __FIREBASE_CONFIG__: {
-  apiKey: string;
-  authDomain: string;
-  databaseURL: string;
-  projectId: string;
-  storageBucket: string;
-  messagingSenderId: string;
-  appId: string;
+// Firebase configuration using environment variables directly
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: import.meta.env.VITE_FIREBASE_DB_URL,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
-
-// Use the configuration from Vite's define
-const firebaseConfig = __FIREBASE_CONFIG__;
 
 // Log the actual configuration being used (without sensitive values)
 console.log('Firebase configuration:', {
